@@ -1,0 +1,591 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #1a1a1a; /* Fundo escuro opaco */
+    overflow: hidden;
+  }
+
+  #root {
+    width: 100vw;
+    height: 100vh;
+  }
+}
+
+/* Regras para Electron Frameless Window */
+.drag-handle {
+  -webkit-app-region: drag;
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+}
+
+/* Estilos do Tiptap Editor */
+.tiptap {
+  outline: none;
+  min-height: 60px;
+}
+
+.tiptap-wrapper {
+  width: 100%;
+  display: block;
+}
+
+.tiptap-wrapper .tiptap {
+  width: 100%;
+  min-height: 60px;
+}
+
+.tiptap p {
+  margin: 0.5rem 0;
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: rgba(255, 255, 255, 0.3);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap strong {
+  font-weight: 700;
+}
+
+.tiptap em {
+  font-style: italic;
+}
+
+.tiptap ul,
+.tiptap ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+}
+
+.tiptap li {
+  margin: 0.25rem 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tiptap li::marker {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Remover estilos padrão do prose que podem conflitar */
+.tiptap :where(p):not(:where([class~="not-prose"] *)) {
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Scrollbar customizada */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Animações */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slide-up 0.2s ease-out;
+}
+
+/* Estilos para Resizable Handle */
+.resize-handle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0 0 0.75rem 0;
+  cursor: nwse-resize;
+  transition: background 0.2s;
+}
+
+.resize-handle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Estilos para re-resizable */
+.re-resizable {
+  position: relative;
+}
+
+.re-resizable-handle {
+  position: absolute;
+  font-size: 1px;
+  background: transparent;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.re-resizable-handle.re-resizable-handle-se {
+  bottom: 0;
+  right: 0;
+  cursor: nwse-resize;
+  width: 20px;
+  height: 20px;
+}
+
+.animate-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Otimização de Performance para Drag */
+.will-change-transform {
+  will-change: transform;
+}
+
+/* Scrollbar Hide (para toolbar horizontal) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Estilos para TaskList (Checklist) */
+.tiptap ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap ul[data-type="taskList"] li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+  min-height: 1.5rem;
+}
+
+.tiptap ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin: 0;
+  margin-top: 0.125rem;
+  user-select: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tiptap ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+  line-height: 1.5;
+}
+
+.tiptap ul[data-type="taskList"] input[type="checkbox"] {
+  cursor: pointer;
+  width: 1rem;
+  height: 1rem;
+  accent-color: #3b82f6;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.tiptap ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilos para Blockquote (Citação) - Padrão */
+.tiptap blockquote {
+  border-left: 4px solid #3b82f6;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 0 4px 4px 0;
+  padding: 0.75rem 1rem;
+}
+
+/* Blockquote com cores customizadas via classes CSS */
+.tiptap blockquote[data-color][data-border-color],
+.tiptap blockquote.blockquote-color-3b82f6 { border-left-color: #2563eb !important; background-color: #3b82f615 !important; }
+.tiptap blockquote.blockquote-color-10b981 { border-left-color: #059669 !important; background-color: #10b98115 !important; }
+.tiptap blockquote.blockquote-color-8b5cf6 { border-left-color: #7c3aed !important; background-color: #8b5cf615 !important; }
+.tiptap blockquote.blockquote-color-ec4899 { border-left-color: #db2777 !important; background-color: #ec489915 !important; }
+.tiptap blockquote.blockquote-color-f59e0b { border-left-color: #d97706 !important; background-color: #f59e0b15 !important; }
+.tiptap blockquote.blockquote-color-ef4444 { border-left-color: #dc2626 !important; background-color: #ef444415 !important; }
+.tiptap blockquote.blockquote-color-eab308 { border-left-color: #ca8a04 !important; background-color: #eab30815 !important; }
+.tiptap blockquote.blockquote-color-06b6d4 { border-left-color: #0891b2 !important; background-color: #06b6d415 !important; }
+.tiptap blockquote.blockquote-color-6b7280 { border-left-color: #4b5563 !important; background-color: #6b728015 !important; }
+
+/* Aplicar cores via atributos data também (fallback) */
+.tiptap blockquote[data-color="#3b82f6"][data-border-color] { border-left-color: #2563eb !important; background-color: #3b82f615 !important; }
+.tiptap blockquote[data-color="#10b981"][data-border-color] { border-left-color: #059669 !important; background-color: #10b98115 !important; }
+.tiptap blockquote[data-color="#8b5cf6"][data-border-color] { border-left-color: #7c3aed !important; background-color: #8b5cf615 !important; }
+.tiptap blockquote[data-color="#ec4899"][data-border-color] { border-left-color: #db2777 !important; background-color: #ec489915 !important; }
+.tiptap blockquote[data-color="#f59e0b"][data-border-color] { border-left-color: #d97706 !important; background-color: #f59e0b15 !important; }
+.tiptap blockquote[data-color="#ef4444"][data-border-color] { border-left-color: #dc2626 !important; background-color: #ef444415 !important; }
+.tiptap blockquote[data-color="#eab308"][data-border-color] { border-left-color: #ca8a04 !important; background-color: #eab30815 !important; }
+.tiptap blockquote[data-color="#06b6d4"][data-border-color] { border-left-color: #0891b2 !important; background-color: #06b6d415 !important; }
+.tiptap blockquote[data-color="#6b7280"][data-border-color] { border-left-color: #4b5563 !important; background-color: #6b728015 !important; }
+
+/* Temas de Código - Compatíveis com numeração de linhas */
+.tiptap pre.code-theme-horizon,
+.tiptap pre[data-code-theme="code-theme-horizon"] {
+  background-color: #1C1E26 !important;
+  color: #CBCED0 !important;
+}
+
+.tiptap pre.code-theme-horizon code,
+.tiptap pre[data-code-theme="code-theme-horizon"] code {
+  background-color: transparent !important;
+  color: #CBCED0 !important;
+}
+
+.tiptap pre.code-theme-horizon.code-with-lines::before,
+.tiptap pre[data-code-theme="code-theme-horizon"].code-with-lines::before {
+  background-color: #1C1E26 !important;
+  color: #6C6F93 !important;
+}
+
+.tiptap pre.code-theme-nord,
+.tiptap pre[data-code-theme="code-theme-nord"] {
+  background-color: #2E3440 !important;
+  color: #D8DEE9 !important;
+}
+
+.tiptap pre.code-theme-nord code,
+.tiptap pre[data-code-theme="code-theme-nord"] code {
+  background-color: transparent !important;
+  color: #D8DEE9 !important;
+}
+
+.tiptap pre.code-theme-nord.code-with-lines::before,
+.tiptap pre[data-code-theme="code-theme-nord"].code-with-lines::before {
+  background-color: #2E3440 !important;
+  color: #616E88 !important;
+}
+
+.tiptap pre.code-theme-dracula,
+.tiptap pre[data-code-theme="code-theme-dracula"] {
+  background-color: #282A36 !important;
+  color: #F8F8F2 !important;
+}
+
+.tiptap pre.code-theme-dracula code,
+.tiptap pre[data-code-theme="code-theme-dracula"] code {
+  background-color: transparent !important;
+  color: #F8F8F2 !important;
+}
+
+.tiptap pre.code-theme-dracula.code-with-lines::before,
+.tiptap pre[data-code-theme="code-theme-dracula"].code-with-lines::before {
+  background-color: #282A36 !important;
+  color: #6272A4 !important;
+}
+
+.tiptap pre.code-theme-onedark,
+.tiptap pre[data-code-theme="code-theme-onedark"] {
+  background-color: #282C34 !important;
+  color: #ABB2BF !important;
+}
+
+.tiptap pre.code-theme-onedark code,
+.tiptap pre[data-code-theme="code-theme-onedark"] code {
+  background-color: transparent !important;
+  color: #ABB2BF !important;
+}
+
+.tiptap pre.code-theme-onedark.code-with-lines::before,
+.tiptap pre[data-code-theme="code-theme-onedark"].code-with-lines::before {
+  background-color: #282C34 !important;
+  color: #5C6370 !important;
+}
+
+/* Estilos para CodeBlock com Numeração de Linhas (estilo VS Code) */
+/* Estilos padrão - apenas quando NÃO tem tema */
+.tiptap pre:not([data-code-theme]):not(.code-theme-horizon):not(.code-theme-nord):not(.code-theme-dracula):not(.code-theme-onedark) {
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tiptap pre {
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  position: relative;
+}
+
+.tiptap pre code {
+  background: transparent;
+  padding: 1rem;
+  font-size: inherit;
+  color: inherit;
+  display: block;
+  white-space: pre;
+}
+
+/* Code block com numeração de linhas */
+.tiptap pre.code-with-lines {
+  display: flex;
+  padding: 0;
+}
+
+.tiptap pre.code-with-lines::before {
+  content: attr(data-lines);
+  width: 3rem;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 0.5rem;
+  text-align: right;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  user-select: none;
+  line-height: 1.5;
+  white-space: pre;
+  border-radius: 0.5rem 0 0 0.5rem;
+}
+
+.tiptap pre.code-with-lines code {
+  padding: 1rem;
+  padding-left: 1rem;
+  flex: 1;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.tiptap code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Estilos para Heading */
+.tiptap h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 1rem 0;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.2;
+}
+
+.tiptap h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0.75rem 0;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.3;
+}
+
+/* Estilos para Underline */
+.tiptap u {
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Estilos para Highlight (Marca-texto) */
+.tiptap mark {
+  background-color: rgba(255, 255, 0, 0.4);
+  color: rgba(0, 0, 0, 0.9);
+  padding: 0.1rem 0.2rem;
+  border-radius: 0.2rem;
+}
+
+/* Estilos para Strike (Riscado) */
+.tiptap s {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Estilos para Text Align */
+.tiptap [style*="text-align: left"] {
+  text-align: left;
+}
+
+.tiptap [style*="text-align: center"] {
+  text-align: center;
+}
+
+.tiptap [style*="text-align: right"] {
+  text-align: right;
+}
+
+.tiptap [style*="text-align: justify"] {
+  text-align: justify;
+}
+
+/* ============================================
+   ESTILOS PARA TEMA LIGHT (Alto Contraste)
+   ============================================ */
+
+.light-theme .tiptap p {
+  color: #171717; /* neutral-900 - Alto contraste */
+}
+
+.light-theme .tiptap p.is-editor-empty:first-child::before {
+  color: rgba(0, 0, 0, 0.4); /* Placeholder com bom contraste */
+}
+
+.light-theme .tiptap li {
+  color: #171717; /* neutral-900 */
+}
+
+.light-theme .tiptap li::marker {
+  color: #525252; /* neutral-600 */
+}
+
+.light-theme .tiptap :where(p):not(:where([class~="not-prose"] *)) {
+  color: #171717; /* neutral-900 */
+}
+
+.light-theme .tiptap h1 {
+  color: #0a0a0a; /* neutral-950 - Máximo contraste */
+}
+
+.light-theme .tiptap h2 {
+  color: #0a0a0a; /* neutral-950 */
+}
+
+.light-theme .tiptap u {
+  text-decoration-color: rgba(0, 0, 0, 0.5);
+}
+
+.light-theme .tiptap mark {
+  background-color: rgba(255, 255, 0, 0.6); /* Amarelo mais forte para contraste */
+  color: #0a0a0a; /* Texto escuro sobre fundo amarelo */
+  padding: 0.1rem 0.2rem;
+  border-radius: 0.2rem;
+}
+
+.light-theme .tiptap s {
+  text-decoration-color: rgba(0, 0, 0, 0.5);
+  opacity: 0.6;
+}
+
+.light-theme .tiptap blockquote {
+  border-left-color: #2563eb; /* blue-600 */
+  color: #262626; /* neutral-800 */
+  background: rgba(37, 99, 235, 0.1); /* blue-600 com opacidade */
+}
+
+.light-theme .tiptap pre {
+  background: rgba(0, 0, 0, 0.05);
+  color: #0a0a0a; /* neutral-950 */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .tiptap code {
+  background: rgba(0, 0, 0, 0.08);
+  color: #0a0a0a; /* neutral-950 */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .tiptap ul[data-type="taskList"] li {
+  color: #171717; /* neutral-900 */
+}
+
+.light-theme .tiptap ul[data-type="taskList"] li > div {
+  color: #171717; /* neutral-900 */
+}
+
+.light-theme .tiptap ul[data-type="taskList"] li[data-checked="true"] > div {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.light-theme .tiptap ul[data-type="taskList"] input[type="checkbox"] {
+  accent-color: #2563eb; /* blue-600 */
+}
+
+/* Code Block com numeração para tema light */
+.light-theme .tiptap pre.code-with-lines::before {
+  background: rgba(0, 0, 0, 0.05);
+  border-right-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.light-theme .tiptap pre {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .tiptap pre code {
+  color: #0a0a0a;
+}
+
+/* Blockquote com cores customizadas - Aplicação via JavaScript */
+.tiptap blockquote[data-color][data-border-color] {
+  transition: all 0.2s ease;
+  /* Os estilos serão aplicados via JavaScript com !important */
+}
+
