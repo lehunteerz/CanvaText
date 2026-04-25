@@ -1,3 +1,13 @@
+<img width="1883" height="1028" alt="image" src="https://github.com/user-attachments/assets/707f6534-7ce9-43a3-a510-46eeb9eb6eee" />
+
+<img width="1884" height="1027" alt="image" src="https://github.com/user-attachments/assets/791c5490-e32b-492e-8353-cec42fb0deee" />
+
+<img width="1919" height="1032" alt="image" src="https://github.com/user-attachments/assets/f2631575-3c3b-41d3-8443-1ea10c18ccc9" />
+
+<img width="1919" height="1031" alt="image" src="https://github.com/user-attachments/assets/379b5a09-5ad7-4201-a809-30f0c1ec807a" />
+
+
+
 # CanvaText
 
 Aplicação **desktop** para notas em estilo *canvas* com editor de texto rico (Electron + React + Tiptap).
