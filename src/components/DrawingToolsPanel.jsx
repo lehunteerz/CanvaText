@@ -25,7 +25,7 @@ import { useDraggablePanel } from '../hooks/useDraggablePanel';
 const DrawingToolsPanel = ({ theme = 'dark' }) => {
   const toast = useToastContext();
   const drag = useDraggablePanel({
-    storageKey: 'pureref-drawing-tools-panel',
+    storageKey: 'canvatext-drawing-tools-panel',
     side: 'right',
     fabOffsetPx: 56,
     verticalBiasPx: -80,

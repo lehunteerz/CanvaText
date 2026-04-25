@@ -70,7 +70,7 @@ const DrawingPropertiesPanel = ({ theme = 'dark' }) => {
   const [colorPickerType, setColorPickerType] = useState(null); // 'stroke' | 'fill'
   const isLightTheme = theme === 'light';
   const drag = useDraggablePanel({
-    storageKey: 'pureref-drawing-properties-panel',
+    storageKey: 'canvatext-drawing-properties-panel',
     side: 'left',
   });
 

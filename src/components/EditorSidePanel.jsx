@@ -6,7 +6,7 @@ const EditorSidePanel = ({ theme = 'dark' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const drag = useDraggablePanel({
-    storageKey: 'pureref-editor-side-panel',
+    storageKey: 'canvatext-editor-side-panel',
     side: 'right',
     fabOffsetPx: 56,
   });
