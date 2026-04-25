@@ -28,7 +28,7 @@ dist-electron
 build
 out
 *.exe
-# Instalador .exe fica fora do Git (>100 MB no GitHub). Ver installer/README.md e anexar o .exe nas GitHub Releases.
+# Instalador .exe fica fora do Git (>100 MB no GitHub). Anexar o .exe nas GitHub Releases.
 !installer/*.blockmap
 !installer/latest.yml
 *.dmg

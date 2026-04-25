@@ -1,6 +1,0 @@
-services:
-  pureref:
-    image: pureref
-    build:
-      context: .
-      dockerfile: ./Dockerfile
