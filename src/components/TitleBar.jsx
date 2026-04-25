@@ -1,7 +1,17 @@
 import { memo, useState, useEffect, useCallback } from 'react';
-import { X, Minus, Pin, LayoutGrid, PanelTop, Keyboard, FileEdit } from 'lucide-react';
+import { X, Minus, Pin, LayoutGrid, PanelTop, Keyboard, FileEdit, Sun, Moon } from 'lucide-react';
+import ExportMenu from './ExportMenu';
+import { useTheme } from '../contexts/ThemeContext';
 
-const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onShowShortcuts }) {
+const TitleBar = memo(function TitleBar({
+  viewMode = 'canvas',
+  setViewMode,
+  onShowShortcuts,
+  titleBarEditor = null,
+  titleBarExportNoteTitle = 'Editor',
+}) {
+  const { theme, toggleTheme } = useTheme();
+  const isLight = theme === 'light';
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
 
@@ -68,9 +78,23 @@ const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onSh
     setViewMode('editor');
   }, [setViewMode]);
 
+  const modeBtnIdle = isLight
+    ? 'text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900'
+    : 'text-neutral-300 hover:bg-white/10 hover:text-white';
+  const modeBtnActive = isLight
+    ? 'text-blue-600 hover:bg-blue-500/15 bg-blue-500/10 shadow-sm'
+    : 'text-blue-400 hover:bg-blue-500/20 bg-blue-500/10 shadow-sm';
+  const utilBtn = isLight
+    ? 'text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900'
+    : 'text-neutral-300 hover:bg-white/10 hover:text-white';
+
   return (
     <div 
-      className="h-10 w-full bg-neutral-900/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-4 flex-shrink-0 select-none fixed top-0 left-0 right-0 z-50 transition-opacity duration-300"
+      className={`h-10 w-full backdrop-blur-md flex items-center justify-between px-4 flex-shrink-0 select-none fixed top-0 left-0 right-0 z-50 transition-opacity duration-300 border-b ${
+        isLight
+          ? 'bg-white/95 border-neutral-200'
+          : 'bg-neutral-900/95 border-white/10'
+      }`}
       style={{ 
         WebkitAppRegion: 'drag',
         opacity: isHovered ? 1 : 0.4
@@ -86,7 +110,9 @@ const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onSh
           className="w-5 h-5 object-contain"
           style={{ WebkitAppRegion: 'no-drag' }}
         />
-        <span className="text-gray-300 text-sm font-semibold">CanvaText</span>
+        <span className={`text-sm font-semibold ${isLight ? 'text-neutral-900' : 'text-neutral-100'}`}>
+          CanvaText
+        </span>
       </div>
 
       {/* Centro: Botões de Modo de Visualização */}
@@ -99,10 +125,7 @@ const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onSh
           onClick={handleSetCanvasMode}
           className={`
             w-9 h-9 flex items-center justify-center rounded-md transition-all duration-200
-            ${viewMode === 'canvas'
-              ? 'text-blue-400 hover:bg-blue-500/20 bg-blue-500/10 shadow-sm' 
-              : 'text-neutral-400 hover:bg-white/10 hover:text-white'
-            }
+            ${viewMode === 'canvas' ? modeBtnActive : modeBtnIdle}
           `}
           style={{ WebkitAppRegion: 'no-drag' }}
           title="Modo Canvas (Notas flutuantes)"
@@ -115,10 +138,7 @@ const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onSh
           onClick={handleSetTabsMode}
           className={`
             w-9 h-9 flex items-center justify-center rounded-md transition-all duration-200
-            ${viewMode === 'tabs'
-              ? 'text-blue-400 hover:bg-blue-500/20 bg-blue-500/10 shadow-sm' 
-              : 'text-neutral-400 hover:bg-white/10 hover:text-white'
-            }
+            ${viewMode === 'tabs' ? modeBtnActive : modeBtnIdle}
           `}
           style={{ WebkitAppRegion: 'no-drag' }}
           title="Modo Abas (Organizado)"
@@ -131,10 +151,7 @@ const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onSh
           onClick={handleSetEditorMode}
           className={`
             w-9 h-9 flex items-center justify-center rounded-md transition-all duration-200
-            ${viewMode === 'editor'
-              ? 'text-blue-400 hover:bg-blue-500/20 bg-blue-500/10 shadow-sm' 
-              : 'text-neutral-400 hover:bg-white/10 hover:text-white'
-            }
+            ${viewMode === 'editor' ? modeBtnActive : modeBtnIdle}
           `}
           style={{ WebkitAppRegion: 'no-drag' }}
           title="Modo Editor (Editor completo)"
@@ -148,11 +165,31 @@ const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onSh
         className="flex items-center gap-1" 
         style={{ WebkitAppRegion: 'no-drag' }}
       >
-        {/* Botão Atalhos de Teclado - Movido para próximo do Pin */}
+        {/* Exportar / Salvar como — modo editor, ao lado dos atalhos */}
+        {viewMode === 'editor' && titleBarEditor && (
+          <ExportMenu
+            editor={titleBarEditor}
+            noteTitle={titleBarExportNoteTitle}
+            variant="titleBar"
+          />
+        )}
+
+        {/* Tema claro / escuro — visível em todos os modos */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className={`w-9 h-9 flex items-center justify-center rounded-md transition-all duration-200 border-none outline-none ${utilBtn}`}
+          style={{ WebkitAppRegion: 'no-drag' }}
+          title={isLight ? 'Alternar para tema escuro' : 'Alternar para tema claro'}
+        >
+          {isLight ? <Moon size={16} strokeWidth={2} /> : <Sun size={16} strokeWidth={2} />}
+        </button>
+
+        {/* Botão Atalhos de Teclado */}
         {onShowShortcuts && (
           <button
             onClick={onShowShortcuts}
-            className="w-9 h-9 flex items-center justify-center text-neutral-400 hover:bg-white/10 hover:text-white transition-all duration-200 rounded-md"
+            className={`w-9 h-9 flex items-center justify-center transition-all duration-200 rounded-md ${utilBtn}`}
             style={{ WebkitAppRegion: 'no-drag' }}
             title="Atalhos de Teclado (Ctrl+Space)"
           >
@@ -161,16 +198,18 @@ const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onSh
         )}
 
         {/* Separador visual */}
-        <div className="w-px h-5 bg-white/10 mx-1"></div>
+        <div className={`w-px h-5 mx-1 ${isLight ? 'bg-neutral-200' : 'bg-white/10'}`} />
 
         {/* Botão Fixar no Topo */}
         <button
           onClick={handleTogglePin}
           className={`
             w-9 h-9 flex items-center justify-center rounded-md transition-all duration-200
-            ${isPinned 
-              ? 'text-blue-400 hover:bg-blue-500/20 bg-blue-500/10 shadow-sm' 
-              : 'text-neutral-400 hover:bg-white/10 hover:text-white'
+            ${isPinned
+              ? isLight
+                ? 'text-blue-600 hover:bg-blue-500/15 bg-blue-500/10 shadow-sm'
+                : 'text-blue-400 hover:bg-blue-500/20 bg-blue-500/10 shadow-sm'
+              : utilBtn
             }
           `}
           style={{ WebkitAppRegion: 'no-drag' }}
@@ -182,7 +221,7 @@ const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onSh
         {/* Botão Minimizar */}
         <button
           onClick={handleMinimize}
-          className="w-9 h-9 flex items-center justify-center text-neutral-400 hover:bg-white/10 hover:text-white transition-all duration-200 rounded-md"
+          className={`w-9 h-9 flex items-center justify-center transition-all duration-200 rounded-md ${utilBtn}`}
           style={{ WebkitAppRegion: 'no-drag' }}
           title="Minimizar"
         >
@@ -192,7 +231,11 @@ const TitleBar = memo(function TitleBar({ viewMode = 'canvas', setViewMode, onSh
         {/* Botão Fechar */}
         <button
           onClick={handleClose}
-          className="w-9 h-9 flex items-center justify-center text-neutral-400 hover:bg-red-500/20 hover:text-red-400 transition-all duration-200 rounded-md"
+          className={`w-9 h-9 flex items-center justify-center transition-all duration-200 rounded-md ${
+            isLight
+              ? 'text-neutral-600 hover:bg-red-500/15 hover:text-red-600'
+              : 'text-neutral-300 hover:bg-red-500/20 hover:text-red-400'
+          }`}
           style={{ WebkitAppRegion: 'no-drag' }}
           title="Fechar"
         >

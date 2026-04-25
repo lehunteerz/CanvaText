@@ -46,7 +46,7 @@ const SelectionPopup = ({ theme = 'dark', selectedItem, onClose, onClone, onDele
     <div
       ref={popupRef}
       className={`
-        fixed right-4 top-1/2 -translate-y-1/2 z-50
+        fixed right-4 top-1/2 -translate-y-1/2 z-[56] pointer-events-auto
         w-72 rounded-lg shadow-2xl
         transition-all duration-300
         ${isLightTheme

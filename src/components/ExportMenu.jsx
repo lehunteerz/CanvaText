@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { Download, FileText, Code, FileJson, FileCode, Save } from 'lucide-react';
 import { exportNote, exportNoteUniversal } from '../utils/exportUtils';
+import { useTheme } from '../contexts/ThemeContext';
 
-const ExportMenu = ({ editor, noteTitle = 'nota' }) => {
+const ExportMenu = ({ editor, noteTitle = 'nota', variant = 'default' }) => {
+  const isTitleBar = variant === 'titleBar';
+  const { theme: appTheme } = useTheme();
+  const isLightBar = isTitleBar && appTheme === 'light';
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -75,13 +79,25 @@ const ExportMenu = ({ editor, noteTitle = 'nota' }) => {
   ];
 
   return (
-    <div className="relative" ref={menuRef} style={{ WebkitAppRegion: 'no-drag' }}>
+    <div
+      className={isTitleBar ? '' : 'relative'}
+      ref={menuRef}
+      style={{ WebkitAppRegion: 'no-drag' }}
+    >
       <button
         onClick={handleExportUniversal}
-        className="w-8 h-8 p-1 flex items-center justify-center rounded-md transition-colors duration-150 border-none outline-none flex-shrink-0 bg-transparent text-neutral-400 hover:bg-white/10 hover:text-white"
+        className={
+          isTitleBar
+            ? `w-9 h-9 flex items-center justify-center rounded-md transition-all duration-200 border-none outline-none flex-shrink-0 ${
+                isLightBar
+                  ? 'text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900'
+                  : 'text-neutral-300 hover:bg-white/10 hover:text-white'
+              }`
+            : 'w-8 h-8 p-1 flex items-center justify-center rounded-md transition-colors duration-150 border-none outline-none flex-shrink-0 bg-transparent text-neutral-300 hover:bg-white/10 hover:text-white'
+        }
         title="Salvar Como... (Ctrl+Shift+S)"
       >
-        <Download size={14} strokeWidth={2.5} />
+        <Download size={isTitleBar ? 16 : 14} strokeWidth={2.5} />
       </button>
 
       {/* Menu dropdown (opcional - para formatos rápidos) */}

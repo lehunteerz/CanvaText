@@ -3,10 +3,24 @@ import { useDrawing } from '../contexts/DrawingContext';
 import { throttle } from '../utils/throttle';
 import { useEventListener } from '../hooks/useEventListener';
 import ElementContextMenu from './drawing/ElementContextMenu';
+import { finalizePencilPolyline, pointsToSmoothPathD } from '../utils/pencilPath';
 
 // Gerador de ID único
 let elementIdCounter = 0;
 const generateId = () => `element-${Date.now()}-${++elementIdCounter}`;
+
+const borderWidthPx = (s) => {
+  const w = Number(s?.strokeWidth);
+  return Number.isFinite(w) && w > 0 ? w : 1;
+};
+
+const frameBackgroundColor = (s, isActiveFrame) => {
+  if (s?.fill && s.fill !== 'transparent') return s.fill;
+  return isActiveFrame ? 'rgba(59, 130, 246, 0.09)' : 'rgba(148, 163, 184, 0.07)';
+};
+
+/** Distância mínima entre amostras do lápis (px) — reduz ruído e re-renders */
+const PENCIL_MIN_SAMPLE_DIST = 1.15;
 
 const DrawingCanvas = ({ theme = 'dark' }) => {
   const {
@@ -26,6 +40,10 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
     updateFrameTitle,
     deleteElements,
     drawingMode,
+    defaultStyle,
+    selectedFramePreset,
+    framePlacementMode,
+    pencilSmoothLevel,
   } = useDrawing();
 
   const [isDrawing, setIsDrawing] = useState(false);
@@ -45,6 +63,11 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  /** Traço do lápis completo (sempre atualizado; evita estado atrasado no mouseup) */
+  const pencilPointsRef = useRef([]);
+  const pencilPreviewRafRef = useRef(null);
+  /** Evita closure obsoleta: mousemove global pode rodar antes do re-render após mousedown */
+  const isPencilDrawingRef = useRef(false);
   
   // Refs para otimização com RAF
   const rafIdRef = useRef(null);
@@ -223,6 +246,34 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
     e.preventDefault();
     e.stopPropagation();
 
+    // Quadro por preset: um clique coloca o tamanho exato (Figma-like)
+    if (
+      selectedTool === 'frame' &&
+      framePlacementMode === 'preset' &&
+      selectedFramePreset
+    ) {
+      const w = selectedFramePreset.width;
+      const h = selectedFramePreset.height;
+      const presetElement = {
+        id: generateId(),
+        type: 'frame',
+        x,
+        y,
+        width: w,
+        height: h,
+        frameId: null,
+        title: selectedFramePreset.label,
+        framePresetId: selectedFramePreset.id,
+        zIndex: undefined,
+        locked: false,
+        link: null,
+        style: { ...defaultStyle },
+      };
+      addElement(presetElement);
+      setActiveFrameId(presetElement.id);
+      return;
+    }
+
     // Verificar se está dentro de um frame (exceto quando criando um novo frame)
     let frame = null;
     let frameId = null;
@@ -235,23 +286,22 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
     let adjustedX = x;
     let adjustedY = y;
     if (frame && selectedTool !== 'frame' && selectedTool !== 'pencil') {
-      // Coordenadas relativas ao frame (subtrair posição do frame)
       adjustedX = x - frame.x;
       adjustedY = y - frame.y;
     }
 
-    // Lápis - desenho livre
+    // Lápis: amostragem em coordenadas do canvas
     if (selectedTool === 'pencil') {
+      isPencilDrawingRef.current = true;
       setIsDrawing(true);
-      setPencilPath([{ x: adjustedX, y: adjustedY }]);
+      pencilPointsRef.current = [{ x, y }];
+      setPencilPath([{ x, y }]);
       return;
     }
 
     setIsDrawing(true);
     setStartPos({ x: adjustedX, y: adjustedY });
 
-    // Criar elemento inicial - começar exatamente onde o mouse está
-    // O estilo padrão será aplicado pelo addElement no Context
     const newElement = {
       id: generateId(),
       type: selectedTool,
@@ -260,21 +310,26 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
       width: 0,
       height: 0,
       frameId: frameId,
-      title: selectedTool === 'frame' ? 'Frame' : undefined, // Título padrão para frames
-      zIndex: undefined, // Será definido pelo addElement
+      title: selectedTool === 'frame' ? 'Quadro' : undefined,
+      framePresetId: selectedTool === 'frame' ? null : undefined,
+      zIndex: undefined,
       locked: false,
       link: null,
-      style: {
-        // Estilo será mesclado com defaultStyle no Context
-        stroke: isLightTheme ? '#000000' : '#ffffff',
-        fill: 'transparent',
-        strokeWidth: 2,
-        opacity: 100,
-      },
+      style: { ...defaultStyle },
     };
 
     setCurrentElement(newElement);
-  }, [selectedTool, isLightTheme, elements, getFrameAtPoint, getRelativeCoordinates]);
+  }, [
+    selectedTool,
+    elements,
+    getFrameAtPoint,
+    getRelativeCoordinates,
+    defaultStyle,
+    selectedFramePreset,
+    framePlacementMode,
+    addElement,
+    setActiveFrameId,
+  ]);
 
   // Handler interno para mouse move (otimizado com RAF)
   const handleMouseMoveInternal = useCallback((e) => {
@@ -287,9 +342,23 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
     lastMouseMoveRef.current = { x, y, event: e };
     pendingUpdateRef.current = true;
 
-    // Para lápis, processar imediatamente para suavidade máxima
-    if (selectedTool === 'pencil' && isDrawing) {
-      setPencilPath(prev => [...prev, { x, y }]);
+    // Lápis: usa ref (isPencilDrawingRef) para não depender de isDrawing em closure desatualizada
+    if (selectedTool === 'pencil' && isPencilDrawingRef.current) {
+      const pts = pencilPointsRef.current;
+      const last = pts[pts.length - 1];
+      if (
+        last &&
+        Math.hypot(x - last.x, y - last.y) < PENCIL_MIN_SAMPLE_DIST
+      ) {
+        return;
+      }
+      pts.push({ x, y });
+      if (!pencilPreviewRafRef.current) {
+        pencilPreviewRafRef.current = requestAnimationFrame(() => {
+          pencilPreviewRafRef.current = null;
+          setPencilPath([...pencilPointsRef.current]);
+        });
+      }
       return;
     }
 
@@ -374,7 +443,14 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
         });
       });
     }
-  }, [updateElement, setSelectionBox, setCurrentElement]);
+  }, [
+    updateElement,
+    setSelectionBox,
+    setCurrentElement,
+    selectedTool,
+    isDrawing,
+    setPencilPath,
+  ]);
 
   // Throttle mouse move para melhor performance (exceto para lápis)
   // Para lápis, usar handler direto. Para outros, usar throttle + RAF
@@ -392,6 +468,10 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
       if (rafIdRef.current) {
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
+      }
+      if (pencilPreviewRafRef.current) {
+        cancelAnimationFrame(pencilPreviewRafRef.current);
+        pencilPreviewRafRef.current = null;
       }
       pendingUpdateRef.current = false;
       lastMouseMoveRef.current = null;
@@ -428,38 +508,54 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
       return;
     }
 
-    // Finalizar desenho livre com lápis
-    if (selectedTool === 'pencil' && isDrawing && pencilPath.length > 0) {
-      // Calcular bounding box do path
-      const xs = pencilPath.map(p => p.x);
-      const ys = pencilPath.map(p => p.y);
-      const minX = Math.min(...xs);
-      const minY = Math.min(...ys);
-      const maxX = Math.max(...xs);
-      const maxY = Math.max(...ys);
-      
-      const width = maxX - minX;
-      const height = maxY - minY;
-      
-      // Ajustar path para coordenadas relativas ao bounding box
-      const adjustedPath = pencilPath.map(p => ({
-        x: p.x - minX,
-        y: p.y - minY,
-      }));
-      
-      // Verificar se está dentro de um frame
-      const frame = getFrameAtPoint(minX, minY);
-      const frameId = frame ? frame.id : null;
-      
-      let finalX = minX;
-      let finalY = minY;
-      
-      if (frameId) {
-        finalX = minX - frame.x;
-        finalY = minY - frame.y;
+    // Finalizar desenho livre com lápis (suavização + simplificação ao soltar)
+    if (selectedTool === 'pencil' && isPencilDrawingRef.current) {
+      isPencilDrawingRef.current = false;
+      if (pencilPreviewRafRef.current) {
+        cancelAnimationFrame(pencilPreviewRafRef.current);
+        pencilPreviewRafRef.current = null;
       }
-      
-      if (pencilPath.length > 1) {
+
+      let raw = pencilPointsRef.current.length
+        ? [...pencilPointsRef.current]
+        : [...pencilPath];
+
+      pencilPointsRef.current = [];
+      setPencilPath([]);
+
+      let processed = finalizePencilPolyline(raw, pencilSmoothLevel);
+      if (processed.length === 1) {
+        const p = processed[0];
+        processed = [p, { x: p.x + 1.2, y: p.y + 1.2 }];
+      }
+
+      if (processed.length >= 2) {
+        const xs = processed.map((p) => p.x);
+        const ys = processed.map((p) => p.y);
+        const minX = Math.min(...xs);
+        const minY = Math.min(...ys);
+        const maxX = Math.max(...xs);
+        const maxY = Math.max(...ys);
+
+        const width = Math.max(maxX - minX, 1);
+        const height = Math.max(maxY - minY, 1);
+
+        const adjustedPath = processed.map((p) => ({
+          x: p.x - minX,
+          y: p.y - minY,
+        }));
+
+        const frame = getFrameAtPoint(minX, minY);
+        const frameId = frame ? frame.id : null;
+
+        let finalX = minX;
+        let finalY = minY;
+
+        if (frameId) {
+          finalX = minX - frame.x;
+          finalY = minY - frame.y;
+        }
+
         const pencilElement = {
           id: generateId(),
           type: 'pencil',
@@ -467,25 +563,18 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
           y: finalY,
           width,
           height,
-          path: adjustedPath, // Array de pontos do path
+          path: adjustedPath,
           frameId: frameId,
-          zIndex: undefined, // Será definido pelo addElement
+          zIndex: undefined,
           locked: false,
           link: null,
-          style: {
-            // Estilo será mesclado com defaultStyle no Context
-            stroke: isLightTheme ? '#000000' : '#ffffff',
-            fill: 'transparent',
-            strokeWidth: 2,
-            opacity: 100,
-          },
+          style: { ...defaultStyle },
         };
-        
+
         addElement(pencilElement);
       }
-      
+
       setIsDrawing(false);
-      setPencilPath([]);
       return;
     }
 
@@ -508,7 +597,7 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
 
     setIsDrawing(false);
     setCurrentElement(null);
-  }, [isDrawing, currentElement, isDragging, isMultiSelecting, selectionBox, addElement, setActiveFrameId, selectedTool, pencilPath, getFrameAtPoint, elements, selectedElementIds, selectedElementId, updateElement, startPos, toggleElementSelection]);
+  }, [isDrawing, currentElement, isDragging, isMultiSelecting, selectionBox, addElement, setActiveFrameId, selectedTool, pencilPath, getFrameAtPoint, elements, selectedElementIds, selectedElementId, updateElement, startPos, toggleElementSelection, defaultStyle, setSelectedElementId, setSelectedElementIds, pencilSmoothLevel]);
 
   // Event listeners globais para mouse (otimizado - condicional)
   useEffect(() => {
@@ -649,8 +738,9 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
               ...selectionStyle,
               width: `${width}px`,
               height: `${height}px`,
-              border: `2px solid ${style.stroke}`,
-              backgroundColor: style.fill,
+              border: `${borderWidthPx(style)}px solid ${style.stroke}`,
+              backgroundColor: style.fill === 'transparent' ? 'transparent' : style.fill,
+              boxSizing: 'border-box',
             }}
           />
         );
@@ -682,8 +772,9 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
               width: `${width}px`,
               height: `${height}px`,
               borderRadius: '50%',
-              border: `2px solid ${style.stroke}`,
-              backgroundColor: style.fill,
+              border: `${borderWidthPx(style)}px solid ${style.stroke}`,
+              backgroundColor: style.fill === 'transparent' ? 'transparent' : style.fill,
+              boxSizing: 'border-box',
             }}
           />
         );
@@ -715,8 +806,9 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
               width: `${width}px`,
               height: `${height}px`,
               transform: 'rotate(45deg)',
-              border: `2px solid ${style.stroke}`,
-              backgroundColor: style.fill,
+              border: `${borderWidthPx(style)}px solid ${style.stroke}`,
+              backgroundColor: style.fill === 'transparent' ? 'transparent' : style.fill,
+              boxSizing: 'border-box',
             }}
           />
         );
@@ -756,10 +848,67 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
               x2={width}
               y2={height}
               stroke={style.stroke}
-              strokeWidth={style.strokeWidth}
+              strokeWidth={borderWidthPx(style)}
             />
           </svg>
         );
+
+      case 'arrow': {
+        const sw = borderWidthPx(style);
+        const safeMarkerId = `arrowhead-${String(id).replace(/[^a-zA-Z0-9_-]/g, '')}`;
+        return (
+          <svg
+            key={id}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (selectedTool === 'hand') {
+                setSelectedElementId(id);
+              }
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (selectedTool === 'hand' && isSelected) {
+                setContextMenuState({
+                  isOpen: true,
+                  position: { x: e.clientX, y: e.clientY },
+                  element: element,
+                });
+              }
+            }}
+            style={{
+              ...baseStyle,
+              ...selectionStyle,
+              width: `${Math.max(Math.abs(width), 1)}px`,
+              height: `${Math.max(Math.abs(height), 1)}px`,
+              overflow: 'visible',
+            }}
+          >
+            <defs>
+              <marker
+                id={safeMarkerId}
+                markerWidth="10"
+                markerHeight="10"
+                refX="9"
+                refY="3"
+                orient="auto"
+                markerUnits="userSpaceOnUse"
+              >
+                <polygon points="0 0, 10 3, 0 6" fill={style.stroke} />
+              </marker>
+            </defs>
+            <line
+              x1="0"
+              y1="0"
+              x2={width}
+              y2={height}
+              stroke={style.stroke}
+              strokeWidth={sw}
+              markerEnd={`url(#${safeMarkerId})`}
+            />
+          </svg>
+        );
+      }
 
       case 'frame':
         const frameElements = getElementsInFrame(id);
@@ -804,12 +953,11 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
               ...selectionStyle,
               width: `${width}px`,
               height: `${height}px`,
-              border: isActiveFrame 
-                ? `3px solid ${style.stroke}` 
-                : `3px dashed ${style.stroke}`,
-              backgroundColor: isActiveFrame 
-                ? `${style.fill}30` 
-                : `${style.fill}10`,
+              border: isActiveFrame
+                ? `${borderWidthPx(style) + 1}px solid ${style.stroke}`
+                : `${borderWidthPx(style)}px dashed ${style.stroke}`,
+              backgroundColor: frameBackgroundColor(style, isActiveFrame),
+              boxSizing: 'border-box',
               position: 'relative',
             }}
           >
@@ -894,15 +1042,13 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
           </div>
         );
 
-      case 'pencil':
-        // Desenho livre - renderizar path SVG
+      case 'pencil': {
         const path = element.path || [];
         if (path.length === 0) return null;
-        
-        const pathData = path.length > 1 
-          ? `M ${path[0].x} ${path[0].y} ${path.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`
-          : '';
-        
+
+        const pathData = pointsToSmoothPathD(path);
+        if (!pathData) return null;
+
         return (
           <svg
             key={id}
@@ -934,13 +1080,15 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
             <path
               d={pathData}
               stroke={style.stroke}
-              strokeWidth={style.strokeWidth}
+              strokeWidth={borderWidthPx(style)}
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
+              pointerEvents="stroke"
             />
           </svg>
         );
+      }
 
       default:
         return null;
@@ -1027,9 +1175,9 @@ const DrawingCanvas = ({ theme = 'dark' }) => {
             }}
           >
             <path
-              d={`M ${pencilPath[0].x} ${pencilPath[0].y} ${pencilPath.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ')}`}
-              stroke={isLightTheme ? '#000000' : '#ffffff'}
-              strokeWidth={2}
+              d={pointsToSmoothPathD(pencilPath)}
+              stroke={defaultStyle.stroke}
+              strokeWidth={borderWidthPx(defaultStyle)}
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"

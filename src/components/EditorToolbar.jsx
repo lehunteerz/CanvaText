@@ -21,14 +21,20 @@ import {
   Quote,
   X,
   GripVertical,
-  Moon,
-  Sun
 } from 'lucide-react';
 import ExportMenu from './ExportMenu';
 import BlockquoteButton from './BlockquoteButton';
 import CodeBlockButton from './CodeBlockButton';
 
-const EditorToolbar = ({ editor, isExpanded = false, noteTitle, variant = 'floating', onClose, theme = 'dark', onToggleTheme }) => {
+const EditorToolbar = ({
+  editor,
+  isExpanded = false,
+  noteTitle,
+  variant = 'floating',
+  onClose,
+  theme = 'dark',
+  showExportInToolbar = true,
+}) => {
   if (!editor) return null;
 
   // Função para toggle do parágrafo - se já está em parágrafo, limpa formatações
@@ -76,8 +82,8 @@ const EditorToolbar = ({ editor, isExpanded = false, noteTitle, variant = 'float
                 ? 'bg-blue-100 text-blue-600' 
                 : 'bg-white/20 text-blue-400'
               : isLightTheme
-                ? 'bg-transparent text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
-                : 'bg-transparent text-neutral-400 hover:bg-white/10 hover:text-white'
+                ? 'bg-transparent text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                : 'bg-transparent text-neutral-300 hover:bg-white/10 hover:text-white'
           }
         `}
         style={{ WebkitAppRegion: 'no-drag' }}
@@ -268,21 +274,10 @@ const EditorToolbar = ({ editor, isExpanded = false, noteTitle, variant = 'float
           createButton={createButton}
         />
 
-          <Separator />
-
-          {/* Botão Exportar */}
-          <ExportMenu editor={editor} noteTitle={noteTitle} />
-
-          {/* Botão Tema Dark/Light - Apenas no EditorView */}
-          {isExpanded && !onClose && onToggleTheme && (
+          {showExportInToolbar && (
             <>
               <Separator />
-              {createButton(
-                onToggleTheme,
-                false,
-                theme === 'dark' ? <Sun size={14} strokeWidth={2.5} /> : <Moon size={14} strokeWidth={2.5} />,
-                theme === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'
-              )}
+              <ExportMenu editor={editor} noteTitle={noteTitle} />
             </>
           )}
         </div>
@@ -438,21 +433,10 @@ const EditorToolbar = ({ editor, isExpanded = false, noteTitle, variant = 'float
             createButton={createButton}
           />
 
-          <Separator />
-
-          {/* Botão Exportar */}
-          <ExportMenu editor={editor} noteTitle={noteTitle} />
-
-          {/* Botão Tema Dark/Light - Apenas no EditorView */}
-          {isExpanded && !onClose && onToggleTheme && (
+          {showExportInToolbar && (
             <>
               <Separator />
-              {createButton(
-                onToggleTheme,
-                false,
-                theme === 'dark' ? <Sun size={14} strokeWidth={2.5} /> : <Moon size={14} strokeWidth={2.5} />,
-                theme === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'
-              )}
+              <ExportMenu editor={editor} noteTitle={noteTitle} />
             </>
           )}
         </div>
@@ -462,9 +446,14 @@ const EditorToolbar = ({ editor, isExpanded = false, noteTitle, variant = 'float
 
   // Modo Fixed: Toolbar fixa (para TabbedView)
   if (variant === 'fixed') {
+    const isLightTheme = theme === 'light';
     return (
       <div 
-        className="w-full bg-neutral-900 border-b border-white/5 px-4 py-2 flex items-center gap-0.5 overflow-x-auto scrollbar-hide flex-nowrap justify-start"
+        className={`w-full border-b px-4 py-2 flex items-center gap-0.5 overflow-x-auto scrollbar-hide flex-nowrap justify-start ${
+          isLightTheme
+            ? 'bg-white border-neutral-200'
+            : 'bg-neutral-900 border-white/5'
+        }`}
         style={{ 
           WebkitAppRegion: 'no-drag',
           scrollbarWidth: 'none',
@@ -609,10 +598,12 @@ const EditorToolbar = ({ editor, isExpanded = false, noteTitle, variant = 'float
         createButton={createButton}
       />
 
-      <Separator />
-
-      {/* Botão Exportar */}
-      <ExportMenu editor={editor} noteTitle={noteTitle} />
+      {showExportInToolbar && (
+        <>
+          <Separator />
+          <ExportMenu editor={editor} noteTitle={noteTitle} />
+        </>
+      )}
     </div>
     );
   }
@@ -765,10 +756,12 @@ const EditorToolbar = ({ editor, isExpanded = false, noteTitle, variant = 'float
         createButton={createButton}
       />
 
-      <Separator />
-
-      {/* Botão Exportar */}
-      <ExportMenu editor={editor} noteTitle={noteTitle} />
+      {showExportInToolbar && (
+        <>
+          <Separator />
+          <ExportMenu editor={editor} noteTitle={noteTitle} />
+        </>
+      )}
     </div>
   );
 };

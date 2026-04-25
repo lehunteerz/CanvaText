@@ -8,9 +8,9 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import CodeBlockWithTheme from '../extensions/CodeBlockWithTheme';
 import BlockquoteWithColor from '../extensions/BlockquoteWithColor';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import EditorToolbar from './EditorToolbar';
-import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { useCodeBlockLineNumbers } from '../hooks/useCodeBlockLineNumbers';
 import { useBlockquoteColorObserver } from '../hooks/useBlockquoteColorObserver';
 import { useCodeBlockThemeObserver } from '../hooks/useCodeBlockThemeObserver';
@@ -23,9 +23,10 @@ import DrawingPropertiesPanel from './drawing/DrawingPropertiesPanel';
 import { DrawingProvider, useDrawing } from '../contexts/DrawingContext';
 import { useDrawingKeyboardShortcuts } from '../hooks/useDrawingKeyboardShortcuts';
 import { useToastContext } from '../contexts/ToastContext';
+import { useEditorCanvasContextMenu } from '../hooks/useEditorCanvasContextMenu';
 
-function EditorViewContent() {
-  const { theme, toggleTheme } = useTheme();
+function EditorViewContent({ onEditorReady }) {
+  const { theme } = useTheme();
   const toast = useToastContext();
   const {
     selectedElementId,
@@ -97,6 +98,18 @@ function EditorViewContent() {
   // Manter temas dos code blocks aplicados
   useCodeBlockThemeObserver(editor);
 
+  useEffect(() => {
+    onEditorReady?.(editor ?? null);
+    return () => onEditorReady?.(null);
+  }, [editor, onEditorReady]);
+
+  const { onEditorAreaContextMenu, contextMenuUI } = useEditorCanvasContextMenu({
+    editor,
+    theme,
+    toast,
+    enabled: Boolean(editor && !drawingMode),
+  });
+
   return (
     <div className={`w-full h-full flex flex-col transition-colors duration-300 ${
       theme === 'light' 
@@ -126,7 +139,7 @@ function EditorViewContent() {
               noteTitle="Editor"
               variant="floating"
               theme={theme}
-              onToggleTheme={toggleTheme}
+              showExportInToolbar={false}
             />
           </div>
         </div>
@@ -146,10 +159,14 @@ function EditorViewContent() {
           }}
           className="flex-1 overflow-y-auto scrollbar-thin relative"
           id="editor-scroll-container"
+          onContextMenu={onEditorAreaContextMenu}
         >
           <div className="max-w-4xl mx-auto px-8 py-12 relative">
             {editor && (
-              <div className="tiptap-wrapper relative">
+              <div
+                className="tiptap-wrapper relative"
+                onContextMenu={onEditorAreaContextMenu}
+              >
                 <EditorContent 
                   editor={editor}
                 />
@@ -170,7 +187,7 @@ function EditorViewContent() {
           <button
             onClick={exitDrawingMode}
             className={`
-              fixed top-20 left-1/2 -translate-x-1/2 z-50
+              fixed top-20 left-1/2 -translate-x-1/2 z-[55] pointer-events-auto
               px-4 py-2 rounded-lg shadow-lg
               flex items-center gap-2
               transition-all duration-200
@@ -219,17 +236,17 @@ function EditorViewContent() {
           // Implementar lógica de link
         }}
       />
+
+      {contextMenuUI}
     </div>
   );
 }
 
-function EditorView() {
+function EditorView({ onEditorReady }) {
   return (
-    <ThemeProvider>
-      <DrawingProvider>
-        <EditorViewContent />
-      </DrawingProvider>
-    </ThemeProvider>
+    <DrawingProvider>
+      <EditorViewContent onEditorReady={onEditorReady} />
+    </DrawingProvider>
   );
 }
 

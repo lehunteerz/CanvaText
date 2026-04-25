@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Search, ChevronUp, ChevronDown, FileText } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 
 function SearchModal({ isOpen, onClose, notes, onSelectNote }) {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -111,9 +114,12 @@ function SearchModal({ isOpen, onClose, notes, onSelectNote }) {
     if (!query) return text;
     const regex = new RegExp(`(${query})`, 'gi');
     const parts = text.split(regex);
+    const markCls = isLight
+      ? 'bg-amber-200/90 text-neutral-900 rounded px-1 font-medium'
+      : 'bg-yellow-500/35 text-amber-100 rounded px-1';
     return parts.map((part, i) =>
       regex.test(part) ? (
-        <mark key={i} className="bg-yellow-500/30 text-yellow-200 rounded px-1">
+        <mark key={i} className={markCls}>
           {part}
         </mark>
       ) : (
@@ -130,24 +136,39 @@ function SearchModal({ isOpen, onClose, notes, onSelectNote }) {
       onClick={onClose}
     >
       <div
-        className="bg-neutral-900 border border-neutral-700 rounded-lg shadow-2xl w-full max-w-2xl max-h-[70vh] flex flex-col"
+        className={`rounded-lg shadow-2xl w-full max-w-2xl max-h-[70vh] flex flex-col border ${
+          isLight
+            ? 'bg-white border-neutral-200'
+            : 'bg-neutral-900 border-neutral-700'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-neutral-700">
-          <Search size={18} className="text-neutral-400" />
+        <div
+          className={`flex items-center gap-3 px-4 py-3 border-b ${
+            isLight ? 'border-neutral-200' : 'border-neutral-700'
+          }`}
+        >
+          <Search size={18} className={isLight ? 'text-neutral-600' : 'text-neutral-400'} />
           <input
             ref={inputRef}
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar em todas as notas..."
-            className="flex-1 bg-transparent text-white placeholder-neutral-500 outline-none"
+            className={`flex-1 bg-transparent outline-none placeholder:text-neutral-500 ${
+              isLight ? 'text-neutral-900' : 'text-white'
+            }`}
             autoFocus
           />
           <button
+            type="button"
             onClick={onClose}
-            className="text-neutral-400 hover:text-white transition-colors"
+            className={
+              isLight
+                ? 'text-neutral-600 hover:text-neutral-900 transition-colors'
+                : 'text-neutral-300 hover:text-white transition-colors'
+            }
             title="Fechar (Esc)"
           >
             <X size={18} />
@@ -157,39 +178,64 @@ function SearchModal({ isOpen, onClose, notes, onSelectNote }) {
         {/* Results */}
         <div className="flex-1 overflow-y-auto" ref={resultsRef}>
           {searchQuery.trim() && results.length === 0 ? (
-            <div className="px-4 py-8 text-center text-neutral-500">
+            <div className={`px-4 py-8 text-center ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
               Nenhum resultado encontrado
             </div>
           ) : !searchQuery.trim() ? (
-            <div className="px-4 py-8 text-center text-neutral-500">
+            <div className={`px-4 py-8 text-center ${isLight ? 'text-neutral-600' : 'text-neutral-400'}`}>
               Digite para buscar nas notas...
             </div>
           ) : (
             <div className="py-2">
-              <div className="px-4 py-2 text-xs text-neutral-500 border-b border-neutral-800">
+              <div
+                className={`px-4 py-2 text-xs border-b ${
+                  isLight
+                    ? 'text-neutral-600 border-neutral-200'
+                    : 'text-neutral-400 border-neutral-800'
+                }`}
+              >
                 {results.length} {results.length === 1 ? 'resultado' : 'resultados'}
               </div>
               {results.map((result, index) => (
                 <button
                   key={`${result.noteId}-${index}`}
+                  type="button"
                   onClick={() => handleSelectResult(result)}
                   className={`
-                    w-full px-4 py-3 text-left hover:bg-neutral-800 transition-colors
-                    ${selectedIndex === index ? 'bg-neutral-800 border-l-2 border-blue-500' : ''}
+                    w-full px-4 py-3 text-left transition-colors
+                    ${isLight ? 'hover:bg-neutral-100' : 'hover:bg-neutral-800'}
+                    ${
+                      selectedIndex === index
+                        ? isLight
+                          ? 'bg-neutral-100 border-l-2 border-blue-600'
+                          : 'bg-neutral-800 border-l-2 border-blue-500'
+                        : ''
+                    }
                   `}
                 >
                   <div className="flex items-start gap-3">
-                    <FileText size={16} className="text-neutral-400 mt-0.5 flex-shrink-0" />
+                    <FileText
+                      size={16}
+                      className={`mt-0.5 flex-shrink-0 ${isLight ? 'text-neutral-500' : 'text-neutral-400'}`}
+                    />
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-white mb-1">
+                      <div
+                        className={`text-sm font-medium mb-1 ${isLight ? 'text-neutral-900' : 'text-white'}`}
+                      >
                         {highlightText(result.noteTitle, searchQuery)}
                         {result.matchType === 'title' && (
-                          <span className="ml-2 text-xs text-blue-400 bg-blue-500/20 px-1.5 py-0.5 rounded">
+                          <span
+                            className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
+                              isLight
+                                ? 'text-blue-700 bg-blue-100'
+                                : 'text-blue-300 bg-blue-500/20'
+                            }`}
+                          >
                             Título
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-neutral-400 line-clamp-2">
+                      <div className={`text-xs line-clamp-2 ${isLight ? 'text-neutral-600' : 'text-neutral-300'}`}>
                         {highlightText(result.preview, searchQuery)}
                       </div>
                     </div>
@@ -201,18 +247,40 @@ function SearchModal({ isOpen, onClose, notes, onSelectNote }) {
         </div>
 
         {/* Footer - Dicas */}
-        <div className="px-4 py-2 border-t border-neutral-700 flex items-center justify-between text-xs text-neutral-500">
+        <div
+          className={`px-4 py-2 border-t flex items-center justify-between text-xs ${
+            isLight ? 'border-neutral-200 text-neutral-600' : 'border-neutral-700 text-neutral-400'
+          }`}
+        >
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-[10px]">↑↓</kbd>
+              <kbd
+                className={`px-1.5 py-0.5 rounded text-[10px] ${
+                  isLight ? 'bg-neutral-100 text-neutral-800 border border-neutral-200' : 'bg-neutral-800 text-neutral-200'
+                }`}
+              >
+                ↑↓
+              </kbd>
               Navegar
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-[10px]">Enter</kbd>
+              <kbd
+                className={`px-1.5 py-0.5 rounded text-[10px] ${
+                  isLight ? 'bg-neutral-100 text-neutral-800 border border-neutral-200' : 'bg-neutral-800 text-neutral-200'
+                }`}
+              >
+                Enter
+              </kbd>
               Selecionar
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-[10px]">Esc</kbd>
+              <kbd
+                className={`px-1.5 py-0.5 rounded text-[10px] ${
+                  isLight ? 'bg-neutral-100 text-neutral-800 border border-neutral-200' : 'bg-neutral-800 text-neutral-200'
+                }`}
+              >
+                Esc
+              </kbd>
               Fechar
             </span>
           </div>

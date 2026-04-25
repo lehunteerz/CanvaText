@@ -20,6 +20,8 @@ function App() {
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showDownloadsModal, setShowDownloadsModal] = useState(false);
+  /** Instância Tiptap para o botão “Salvar como” na TitleBar (modo editor). */
+  const [titleBarEditor, setTitleBarEditor] = useState(null);
   const [selectedNoteId, setSelectedNoteId] = useState(null);
   const [openFileHandler, setOpenFileHandler] = useState(null);
   const openFileHandlerRef = useRef(null);
@@ -149,6 +151,12 @@ function App() {
     setShowSearchModal(false);
   }, []);
 
+  useEffect(() => {
+    if (viewMode !== 'editor') {
+      setTitleBarEditor(null);
+    }
+  }, [viewMode]);
+
   // Se estiver no modo Editor, sempre mostrar o Editor (independente de ter notas ou não)
   if (viewMode === 'editor') {
     return (
@@ -157,9 +165,11 @@ function App() {
           viewMode={viewMode} 
           setViewMode={setViewMode}
           onShowShortcuts={handleShowShortcuts}
+          titleBarEditor={titleBarEditor}
+          titleBarExportNoteTitle="Editor"
         />
         <div className="flex-1 overflow-hidden pt-10">
-          <EditorView />
+          <EditorView onEditorReady={setTitleBarEditor} />
         </div>
         <ShortcutsHelp 
           isOpen={showShortcutsHelp} 

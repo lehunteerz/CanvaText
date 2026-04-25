@@ -15,6 +15,7 @@ import { useEditorShortcuts } from '../hooks/useKeyboardShortcuts';
 import { pluginManager } from '../plugins/core/PluginManager';
 import { openFile } from '../utils/openFileUtils';
 import { extractTitleFromFileName } from '../utils/fileUtils';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Função auxiliar para extrair título da nota do HTML
 const getNoteTitle = (html) => {
@@ -41,6 +42,8 @@ const getNoteTitle = (html) => {
 };
 
 function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileReady }) {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const { notes, addNote, updateNoteContent, updateNoteTitle, deleteNote, reorderNotes } = notesState;
   const [activeNoteId, setActiveNoteId] = useState(notes.length > 0 ? notes[0]?.id : null);
   const [draggedTabId, setDraggedTabId] = useState(null);
@@ -342,12 +345,12 @@ function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileRead
 
   if (notes.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className={`w-full h-full flex items-center justify-center ${isLight ? 'bg-neutral-50' : 'bg-neutral-950'}`}>
         <div className="text-center">
-          <p className="text-gray-400 text-lg mb-4">Nenhuma nota ainda</p>
+          <p className={`text-lg mb-4 font-medium ${isLight ? 'text-neutral-800' : 'text-neutral-200'}`}>Nenhuma nota ainda</p>
           <button
             onClick={handleAddNote}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
             style={{ WebkitAppRegion: 'no-drag' }}
           >
             Criar primeira nota
@@ -358,10 +361,12 @@ function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileRead
   }
 
   return (
-    <div className="w-full h-full flex flex-col bg-neutral-950">
+    <div className={`w-full h-full flex flex-col ${isLight ? 'bg-neutral-50' : 'bg-neutral-950'}`}>
       {/* Barra de Abas */}
       <div 
-        className="flex items-center gap-1 px-2 bg-neutral-900/50 border-b border-white/10 overflow-x-auto scrollbar-hide"
+        className={`flex items-center gap-1 px-2 border-b overflow-x-auto scrollbar-hide ${
+          isLight ? 'bg-white/95 border-neutral-200' : 'bg-neutral-900/50 border-white/10'
+        }`}
         style={{ 
           WebkitAppRegion: 'no-drag',
           scrollbarWidth: 'none',
@@ -386,9 +391,13 @@ function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileRead
                 : 'cursor-grab'
               }
               ${activeNoteId === note.id && draggedTabId !== note.id
-                ? 'bg-neutral-800 border-blue-500 text-white'
+                ? isLight
+                  ? 'bg-neutral-100 border-blue-600 text-neutral-900'
+                  : 'bg-neutral-800 border-blue-500 text-white'
                 : draggedTabId !== note.id
-                ? 'bg-transparent border-transparent text-gray-400 hover:bg-neutral-800/50 hover:text-white'
+                ? isLight
+                  ? 'bg-transparent border-transparent text-neutral-600 hover:bg-neutral-200/80 hover:text-neutral-900'
+                  : 'bg-transparent border-transparent text-neutral-300 hover:bg-neutral-800/50 hover:text-white'
                 : ''
               }
               ${dragOverIndex === index && draggedTabId !== note.id 
@@ -407,7 +416,7 @@ function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileRead
                 onBlur={() => handleTitleSave(note.id)}
                 onKeyDown={(e) => handleTitleKeyDown(e, note.id)}
                 onMouseDown={(e) => e.stopPropagation()} // Prevenir drag ao clicar no input
-                className="text-sm font-medium bg-transparent border-none outline-none text-white flex-1 min-w-0"
+                className={`text-sm font-medium bg-transparent border-none outline-none flex-1 min-w-0 ${isLight ? 'text-neutral-900' : 'text-white'}`}
                 style={{ WebkitAppRegion: 'no-drag' }}
                 onClick={(e) => e.stopPropagation()}
               />
@@ -442,7 +451,11 @@ function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileRead
           {/* Botão Abrir Arquivo */}
           <button
             onClick={handleOpenFile}
-            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-green-500/20 hover:text-green-400 rounded transition-colors"
+            className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${
+              isLight
+                ? 'text-neutral-600 hover:bg-green-500/15 hover:text-green-700'
+                : 'text-neutral-300 hover:bg-green-500/20 hover:text-green-400'
+            }`}
             style={{ WebkitAppRegion: 'no-drag' }}
             title="Abrir arquivo (Ctrl+O)"
           >
@@ -452,7 +465,11 @@ function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileRead
           {/* Botão Adicionar Nova Nota */}
           <button
             onClick={handleAddNote}
-            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-neutral-800 hover:text-white rounded transition-colors"
+            className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${
+              isLight
+                ? 'text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900'
+                : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'
+            }`}
             style={{ WebkitAppRegion: 'no-drag' }}
             title="Nova nota"
           >
@@ -468,6 +485,7 @@ function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileRead
           <EditorToolbar 
             editor={editor} 
             variant="fixed"
+            theme={isLight ? 'light' : 'dark'}
             noteTitle={getCurrentNoteTitle()}
             onExport={() => {
               // Função será implementada no EditorToolbar
@@ -480,7 +498,7 @@ function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileRead
           </div>
 
           {/* Componentes de Plugins */}
-          <div className="border-t border-white/10">
+          <div className={`border-t ${isLight ? 'border-neutral-200' : 'border-white/10'}`}>
             {(() => {
               const WordCounter = pluginManager.getComponent('word-counter.WordCounter');
               const noteTitle = getCurrentNoteTitle();
@@ -495,7 +513,7 @@ function TabbedView({ notesState, selectedNoteId, onNoteSelected, onOpenFileRead
         </>
       ) : activeNote ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-500">Carregando editor...</p>
+          <p className={isLight ? 'text-neutral-600' : 'text-neutral-400'}>Carregando editor...</p>
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center">

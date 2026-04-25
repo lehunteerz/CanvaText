@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { X } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 
 const SHORTCUTS = {
   'Geral': [
@@ -37,8 +38,25 @@ const SHORTCUTS = {
 };
 
 const ShortcutsHelp = memo(function ShortcutsHelp({ isOpen, onClose }) {
+  const { theme } = useTheme();
+  const L = theme === 'light';
+
   if (!isOpen) return null;
-  
+
+  const panel = L
+    ? 'bg-white border-neutral-200 text-neutral-900 shadow-2xl'
+    : 'bg-neutral-900 border-white/10 text-white shadow-2xl';
+  const cat = L ? 'text-neutral-700' : 'text-neutral-300';
+  const rowHover = L ? 'hover:bg-neutral-100' : 'hover:bg-white/5';
+  const desc = L ? 'text-neutral-800 text-sm' : 'text-neutral-100 text-sm';
+  const kbd = L
+    ? 'px-3 py-1.5 bg-neutral-100 rounded text-xs text-neutral-800 font-mono border border-neutral-200'
+    : 'px-3 py-1.5 bg-neutral-800 rounded text-xs text-neutral-200 font-mono border border-white/10';
+  const foot = L ? 'border-neutral-200 text-neutral-600' : 'border-white/10 text-neutral-400';
+  const closeBtn = L
+    ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+    : 'text-neutral-300 hover:text-white hover:bg-white/10';
+
   return (
     <div 
       className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
@@ -46,16 +64,18 @@ const ShortcutsHelp = memo(function ShortcutsHelp({ isOpen, onClose }) {
       style={{ WebkitAppRegion: 'no-drag' }}
     >
       <div 
-        className="bg-neutral-900 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-white/10 shadow-2xl"
+        className={`rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border ${panel}`}
         onClick={(e) => e.stopPropagation()}
         style={{ WebkitAppRegion: 'no-drag' }}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">Atalhos de Teclado</h2>
+          <h2 className={`text-xl font-bold ${L ? 'text-neutral-900' : 'text-white'}`}>Atalhos de Teclado</h2>
           <button 
+            type="button"
             onClick={onClose} 
-            className="text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+            className={`transition-colors p-1 rounded ${closeBtn}`}
             style={{ WebkitAppRegion: 'no-drag' }}
+            aria-label="Fechar"
           >
             <X size={20} />
           </button>
@@ -64,17 +84,17 @@ const ShortcutsHelp = memo(function ShortcutsHelp({ isOpen, onClose }) {
         <div className="space-y-6">
           {Object.entries(SHORTCUTS).map(([category, shortcuts]) => (
             <div key={category}>
-              <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wide">
+              <h3 className={`text-sm font-semibold mb-3 uppercase tracking-wide ${cat}`}>
                 {category}
               </h3>
               <div className="space-y-1">
                 {shortcuts.map(({ keys, description }) => (
                   <div 
                     key={keys} 
-                    className="flex justify-between items-center py-2 px-3 rounded hover:bg-white/5 transition-colors"
+                    className={`flex justify-between items-center gap-3 py-2 px-3 rounded transition-colors ${rowHover}`}
                   >
-                    <span className="text-white/80 text-sm">{description}</span>
-                    <kbd className="px-3 py-1.5 bg-neutral-800 rounded text-xs text-gray-300 font-mono border border-white/10">
+                    <span className={desc}>{description}</span>
+                    <kbd className={kbd}>
                       {keys}
                     </kbd>
                   </div>
@@ -84,9 +104,9 @@ const ShortcutsHelp = memo(function ShortcutsHelp({ isOpen, onClose }) {
           ))}
         </div>
         
-        <div className="mt-6 pt-4 border-t border-white/10 text-center">
-          <p className="text-xs text-gray-500">
-            Pressione <kbd className="px-2 py-1 bg-neutral-800 rounded text-xs">Ctrl+Space</kbd> para abrir esta ajuda
+        <div className={`mt-6 pt-4 border-t text-center ${foot}`}>
+          <p className="text-xs">
+            Pressione <kbd className={kbd}>Ctrl+Space</kbd> para abrir esta ajuda
           </p>
         </div>
       </div>

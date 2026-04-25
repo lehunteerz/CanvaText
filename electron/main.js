@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
-import { writeFileSync, readFileSync, promises as fs } from 'fs';
+import { writeFileSync, readFileSync, existsSync, promises as fs } from 'fs';
 import { randomUUID } from 'crypto';
 import { marked } from 'marked';
 
@@ -371,6 +371,19 @@ ipcMain.handle('rename-saved-file', async (event, { oldFileName, newFileName }) 
   }
 });
 
+/** Ícone da janela / barra de tarefas (Windows: .ico junto ao bundle) */
+function resolveWindowIcon() {
+  if (process.platform !== 'win32') return undefined;
+  const candidates = [
+    join(__dirname, '..', 'build', 'iconblue.ico'),
+    join(__dirname, '..', 'build', 'icon.ico'),
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return undefined;
+}
+
 function createWindow() {
   // Criar a janela do navegador
   mainWindow = new BrowserWindow({
@@ -378,6 +391,7 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    icon: resolveWindowIcon(),
     frame: false, // Sem bordas padrão do Windows/Mac (frameless)
     titleBarStyle: 'hidden', // Esconder barra de título no macOS
     transparent: false, // Fundo opaco

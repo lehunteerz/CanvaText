@@ -47,11 +47,13 @@ const Toast = memo(function Toast({ id, type = 'info', message, duration = 3000,
         size={20}
         className={`${colors.color} flex-shrink-0 ${type === 'loading' ? 'animate-spin' : ''}`}
       />
-      <p className="text-sm text-white/90 flex-1">{message}</p>
+      <p className="text-sm text-white flex-1 font-medium">{message}</p>
       {type !== 'loading' && (
         <button
+          type="button"
           onClick={handleClose}
-          className="text-white/40 hover:text-white/80 transition-colors flex-shrink-0"
+          className="text-white/70 hover:text-white rounded p-0.5 transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+          aria-label="Fechar notificação"
         >
           <X size={16} />
         </button>

@@ -1,13 +1,16 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   ChevronDown, 
   ChevronUp, 
   Download, 
   Upload,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useDrawing } from '../../contexts/DrawingContext';
 import ColorPicker from './ColorPicker';
+import { useDraggablePanel } from '../../hooks/useDraggablePanel';
 
 // Paleta de cores para contorno
 const OUTLINE_COLORS = [
@@ -31,11 +34,14 @@ const BACKGROUND_COLORS = [
   { name: 'Rosa claro 2', color: '#FCE7F3' },
 ];
 
-// Opções de espessura
+// Opções de espessura (px)
 const STROKE_WIDTHS = [
   { value: 1, label: 'Fino' },
   { value: 2, label: 'Médio' },
   { value: 3, label: 'Grosso' },
+  { value: 4, label: '4px' },
+  { value: 6, label: '6px' },
+  { value: 8, label: '8px' },
 ];
 
 const DrawingPropertiesPanel = ({ theme = 'dark' }) => {
@@ -49,12 +55,24 @@ const DrawingPropertiesPanel = ({ theme = 'dark' }) => {
     bringToFront,
     sendBackward,
     bringForward,
+    selectedTool,
+    pencilSmoothLevel,
+    setPencilSmoothLevel,
   } = useDrawing();
+
+  const pencilSmoothOptions = [
+    { id: 'mild', label: 'Leve', hint: 'Mais fiel ao gesto' },
+    { id: 'normal', label: 'Normal', hint: 'Equilíbrio' },
+    { id: 'strong', label: 'Forte', hint: 'Curvas mais limpas' },
+  ];
 
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [colorPickerType, setColorPickerType] = useState(null); // 'stroke' | 'fill'
-  const panelRef = useRef(null);
   const isLightTheme = theme === 'light';
+  const drag = useDraggablePanel({
+    storageKey: 'pureref-drawing-properties-panel',
+    side: 'left',
+  });
 
   // Obter elemento selecionado
   const selectedElement = selectedElementId 
@@ -149,30 +167,67 @@ const DrawingPropertiesPanel = ({ theme = 'dark' }) => {
 
   return (
     <>
+      {drag.edgeCollapsed && (
+        <button
+          type="button"
+          onClick={drag.expandFromEdge}
+          title="Mostrar propriedades"
+          className={`
+            ${drag.collapseStripClassName}
+            ${isLightTheme
+              ? 'bg-white/95 text-neutral-600 border-neutral-200 hover:bg-neutral-50'
+              : 'bg-neutral-900/95 text-neutral-200 border-white/10 hover:bg-neutral-800'
+            }
+          `}
+          style={{ WebkitAppRegion: 'no-drag' }}
+        >
+          <ChevronRight size={18} strokeWidth={2} />
+        </button>
+      )}
+
+      {!drag.edgeCollapsed && (
       <div
-        ref={panelRef}
+        ref={drag.panelRef}
         className={`
-          fixed left-4 top-1/2 -translate-y-1/2 z-40
-          w-72 rounded-lg shadow-2xl
-          transition-all duration-300
+          relative w-72 rounded-lg shadow-2xl transition-all duration-300
           ${isLightTheme
             ? 'bg-white/95 backdrop-blur-md border border-neutral-200'
             : 'bg-neutral-900/95 backdrop-blur-md border border-white/10'
           }
         `}
-        style={{ 
-          WebkitAppRegion: 'no-drag',
-          maxHeight: '80vh',
-          overflowY: 'auto'
+        style={{
+          ...drag.panelStyle,
+          overflowY: 'auto',
         }}
       >
+        <button
+          type="button"
+          onClick={drag.toggleEdgeCollapsed}
+          title="Recolher para a lateral"
+          className={`
+            absolute right-0 top-1/2 -translate-y-1/2 translate-x-full
+            w-6 py-6 rounded-r-md border shadow-xl flex items-center justify-center
+            transition-colors z-20 pointer-events-auto
+            ${isLightTheme
+              ? 'bg-white/95 border-neutral-200 text-neutral-500 hover:bg-neutral-50'
+              : 'bg-neutral-900/95 border-white/10 text-neutral-400 hover:bg-neutral-800'
+            }
+          `}
+          style={{ WebkitAppRegion: 'no-drag' }}
+        >
+          <ChevronLeft size={16} strokeWidth={2} />
+        </button>
+
         {/* Header */}
-        <div className={`
-          flex items-center justify-between px-4 py-3 border-b
-          ${isLightTheme ? 'border-neutral-200' : 'border-white/10'}
-        `}>
+        <div
+          onMouseDown={drag.handleHeaderMouseDown}
+          className={`
+            flex items-center justify-between px-4 py-3 border-b cursor-grab active:cursor-grabbing
+            ${isLightTheme ? 'border-neutral-200' : 'border-white/10'}
+          `}
+        >
           <h3 className={`
-            text-sm font-semibold
+            text-sm font-semibold select-none
             ${isLightTheme ? 'text-neutral-700' : 'text-white'}
           `}>
             {selectedElement ? 'Propriedades' : 'Configurações'}
@@ -211,6 +266,26 @@ const DrawingPropertiesPanel = ({ theme = 'dark' }) => {
                   title={colorOption.name}
                 />
               ))}
+              <button
+                type="button"
+                onClick={() => handleOpenColorPicker('stroke')}
+                className={`
+                  w-8 h-8 rounded border-2 flex items-center justify-center
+                  transition-all
+                  ${isLightTheme
+                    ? 'border-neutral-300 hover:border-neutral-400 bg-neutral-100'
+                    : 'border-white/20 hover:border-white/40 bg-neutral-800'
+                  }
+                `}
+                title="Cor de contorno personalizada"
+              >
+                <div
+                  className="w-4 h-4 rounded"
+                  style={{
+                    background: 'linear-gradient(45deg, #ff0000, #ff00ff, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000)',
+                  }}
+                />
+              </button>
             </div>
           </div>
 
@@ -279,14 +354,15 @@ const DrawingPropertiesPanel = ({ theme = 'dark' }) => {
             `}>
               Espessura do traço
             </label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {STROKE_WIDTHS.map((widthOption) => (
                 <button
                   key={widthOption.value}
+                  type="button"
                   onClick={() => handleStrokeWidthSelect(widthOption.value)}
                   className={`
-                    flex-1 px-3 py-2 rounded text-sm flex items-center justify-center gap-2
-                    transition-colors
+                    px-2 py-2 rounded text-xs flex flex-col items-center justify-center gap-1
+                    transition-colors min-h-[52px]
                     ${currentStyle.strokeWidth === widthOption.value
                       ? isLightTheme
                         ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
@@ -299,13 +375,13 @@ const DrawingPropertiesPanel = ({ theme = 'dark' }) => {
                   title={widthOption.label}
                 >
                   <div
-                    className="rounded-full"
+                    className="w-full max-w-[48px] rounded-full"
                     style={{
-                      width: '100%',
-                      height: `${widthOption.value * 2}px`,
+                      height: `${Math.min(widthOption.value * 2, 16)}px`,
                       backgroundColor: currentStyle.stroke || '#000000',
                     }}
                   />
+                  <span>{widthOption.label}</span>
                 </button>
               ))}
             </div>
@@ -338,6 +414,47 @@ const DrawingPropertiesPanel = ({ theme = 'dark' }) => {
                 accentColor: isLightTheme ? '#3B82F6' : '#60A5FA',
               }}
             />
+          </div>
+
+          {/* Suavização do lápis (aplica ao soltar o traço) */}
+          <div>
+            <label
+              className={`
+              block text-xs font-medium mb-2
+              ${isLightTheme ? 'text-neutral-600' : 'text-neutral-300'}
+            `}
+            >
+              Suavização do lápis
+              {selectedTool === 'pencil' && (
+                <span className={`ml-1 font-normal ${isLightTheme ? 'text-blue-600' : 'text-blue-400'}`}>
+                  (ativo)
+                </span>
+              )}
+            </label>
+            <div className="flex flex-col gap-1.5">
+              {pencilSmoothOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setPencilSmoothLevel(opt.id)}
+                  className={`
+                    w-full px-3 py-2 rounded text-left text-xs transition-colors
+                    ${
+                      pencilSmoothLevel === opt.id
+                        ? isLightTheme
+                          ? 'bg-blue-100 text-blue-800 ring-1 ring-blue-400'
+                          : 'bg-blue-500/20 text-blue-200 ring-1 ring-blue-400/50'
+                        : isLightTheme
+                          ? 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                          : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
+                    }
+                  `}
+                >
+                  <span className="font-medium">{opt.label}</span>
+                  <span className={`block text-[10px] mt-0.5 opacity-80`}>{opt.hint}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Camadas (apenas se houver elemento selecionado) */}
@@ -418,6 +535,7 @@ const DrawingPropertiesPanel = ({ theme = 'dark' }) => {
           )}
         </div>
       </div>
+      )}
 
       {/* Color Picker Modal */}
       {showColorPicker && (

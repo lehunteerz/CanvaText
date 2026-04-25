@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react';
+import { getDefaultFramePreset } from '../constants/framePresets';
 
 const DrawingContext = createContext(null);
 
@@ -29,6 +30,13 @@ export const DrawingProvider = ({ children }) => {
     strokeWidth: 2,        // Espessura (1, 2, 3)
     opacity: 100,          // Opacidade (0-100)
   });
+
+  /** Quadro: preset Figma-like e modo colocação */
+  const [selectedFramePreset, setSelectedFramePreset] = useState(getDefaultFramePreset);
+  const [framePlacementMode, setFramePlacementMode] = useState('preset'); // 'preset' | 'free'
+
+  /** Lápis: suavização ao soltar ('mild' | 'normal' | 'strong') */
+  const [pencilSmoothLevel, setPencilSmoothLevel] = useState('normal');
   
   // Clipboard para copiar/colar elementos e estilos
   const [clipboard, setClipboard] = useState({
@@ -405,6 +413,12 @@ export const DrawingProvider = ({ children }) => {
         // Novos estados e funções
         defaultStyle,
         setDefaultStyle,
+        selectedFramePreset,
+        setSelectedFramePreset,
+        framePlacementMode,
+        setFramePlacementMode,
+        pencilSmoothLevel,
+        setPencilSmoothLevel,
         clipboard,
         copyToClipboard,
         pasteFromClipboard,

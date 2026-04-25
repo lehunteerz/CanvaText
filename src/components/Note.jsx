@@ -602,7 +602,7 @@ const Note = memo(function Note({
             {/* Botão Expandir Toolbar (só aparece se não estiver colapsado) */}
             {!isCollapsed && (
               <button 
-                className="note-expand-toolbar-btn w-6 h-6 flex items-center justify-center text-white/50 hover:text-white hover:bg-blue-500/20 rounded no-drag"
+                className="note-expand-toolbar-btn w-6 h-6 flex items-center justify-center text-white/80 hover:text-white hover:bg-blue-500/20 rounded no-drag"
                 onClick={() => setIsToolbarExpanded(!isToolbarExpanded)}
                 title={isToolbarExpanded ? 'Recolher Ferramentas' : 'Expandir Ferramentas'}
                 style={{ WebkitAppRegion: 'no-drag' }}
@@ -618,7 +618,7 @@ const Note = memo(function Note({
             {/* Botão Renomear (só aparece se não estiver colapsado e não estiver renomeando) */}
             {!isCollapsed && !isRenaming && (
               <button 
-                className="note-rename-btn w-6 h-6 flex items-center justify-center text-white/50 hover:text-white hover:bg-blue-500/20 rounded no-drag"
+                className="note-rename-btn w-6 h-6 flex items-center justify-center text-white/80 hover:text-white hover:bg-blue-500/20 rounded no-drag"
                 onClick={handleStartRename}
                 title="Renomear arquivo"
                 style={{ WebkitAppRegion: 'no-drag' }}
@@ -629,7 +629,7 @@ const Note = memo(function Note({
 
             {/* Botão Colapsar/Expandir */}
             <button 
-              className="note-collapse-btn w-6 h-6 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 rounded no-drag"
+              className="note-collapse-btn w-6 h-6 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded no-drag"
               onClick={handleToggleCollapse}
               title={isCollapsed ? 'Expandir nota (ou duplo clique na barra)' : 'Colapsar nota (ou duplo clique na barra)'}
               style={{ WebkitAppRegion: 'no-drag' }}
@@ -643,7 +643,7 @@ const Note = memo(function Note({
 
             {/* Botão Deletar */}
             <button 
-              className="note-delete-btn w-6 h-6 flex items-center justify-center text-white/50 hover:text-white hover:bg-red-500/20 rounded no-drag"
+              className="note-delete-btn w-6 h-6 flex items-center justify-center text-white/80 hover:text-white hover:bg-red-500/20 rounded no-drag"
               onClick={() => onDelete(id)}
               title="Deletar nota (Ctrl+Backspace ou arraste para lixeira)"
               style={{ WebkitAppRegion: 'no-drag' }}

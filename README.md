@@ -1,108 +1,117 @@
 # CanvaText
 
-Aplicação de notas estilo canvas com editor rico de texto, construída com Electron, React e Vite.
+Aplicação **desktop** de notas em estilo *canvas* com **editor de texto rico**, pensada para organizar ideias, referências e texto com liberdade de posicionamento, exportação e extensão por **plugins**.
 
-## 🚀 Características
+## Finalidades
 
-- **Editor Rico de Texto**: Baseado em Tiptap com suporte a formatação completa
-- **Modo Canvas**: Arraste e organize suas notas livremente em um canvas
-- **Modo Tabs**: Visualize suas notas em abas organizadas
-- **Sistema de Plugins**: Arquitetura extensível para adicionar funcionalidades
-- **Exportação**: Exporte suas notas em múltiplos formatos (HTML, Markdown, JSON, etc.)
-- **Auto-save**: Salvamento automático das suas notas
-- **Atalhos de Teclado**: Navegação rápida e eficiente
+- Oferecer um quadro (canvas) onde podes colocar e arrastar notas, com alternância para **vista em abas** quando preferires leitura linear.
+- Proporcionar escrita com **formatação completa** (negrito, listas, código, tarefas, alinhamento, etc.) com base no ecossistema **Tiptap** / ProseMirror.
+- Permitir **exportar** o trabalho (HTML, Markdown, JSON, entre outros) e manter **auto-guardar** e integração com o sistema de ficheiros via **Electron** (incluindo diálogos e pasta de documentos do utilizador).
+- Abrir caminho a **extensões** pela arquitectura de **plugins** (exemplos no repositório).
 
-## 📋 Pré-requisitos
+## Stack tecnológica
 
-- Node.js 18+ 
-- npm ou yarn
+| Camada | Tecnologias |
+|--------|-------------|
+| **Runtime desktop** | [Electron](https://www.electronjs.org/) (Chromium + Node) |
+| **UI** | [React](https://react.dev/) 18, [Tailwind CSS](https://tailwindcss.com/), PostCSS, Autoprefixer |
+| **Editor** | [Tiptap](https://tiptap.dev/) 2 (extensões: blocos, listas, código, cores, tarefas, *bubble/floating* menu, etc.) e `@tiptap/pm` (ProseMirror) |
+| **Conteúdo** | [Marked](https://marked.js.org/), [Turndown](https://github.com/mixmark-io/turndown) |
+| **Componentes** | [Lucide React](https://lucide.dev/) (ícones), [react-draggable](https://github.com/react-grid-layout/react-draggable), [re-resizable](https://github.com/bokuweb/re-resizable) |
+| **Build** | [Vite](https://vitejs.dev/) 5, [`@vitejs/plugin-react`](https://github.com/vitejs/vite-plugin-react) |
+| **Package desktop** | [electron-builder](https://www.electron.build/) — Windows (NSIS), macOS (DMG), Linux (AppImage), conforme `package.json` |
 
-## 🛠️ Instalação
+Detalhe das dependências: vê `package.json`.
 
-1. Clone o repositório:
+## Requisitos de sistema
+
+### Desenvolvimento (clonar e compilar)
+
+- **Node.js** 18 ou superior  
+- **npm** ou **yarn**  
+- Espaço em disco para `node_modules` e artefactos de build (ordem de vários **GB** com dependências e Electron)
+
+### Utilização (aplicação instalada)
+
+Não existe um *teto* de hardware: quanto melhor a máquina, mais confortável para muitas notas e exportações. Valores abaixo são **indicativos** para a stack actual (Electron 28, app renderizada em Web).
+
+| | **Especificação** |
+|---|------------------|
+| **Mínimo (indicativo)** | **Windows 10 ou 11 (64 bits)**; **4 GB RAM**; processador 64 bits recente; **~500 MB–1,5 GB** de espaço livre (aplicação, dados e ficheiros temporários) |
+| **Recomendado** | **8 GB RAM** ou mais; **SSD**; resolução de ecrã comum. Melhor desempenho com muitas notas, canvas extenso e ficheiros grandes |
+| **Outros SO** | Builds para **macOS** e **Linux** estão previstos no `package.json` (`build:mac`, `build:linux`); requisitos semelhantes na mesma geração de hardware |
+
+> **Testes formais** em "hardware máximo" não são obrigatórios para aplicações desktop: se publicares, podes listar a máquina em que testaste (ex.: *validado em Windows 11, 16 GB RAM*).
+
+## Histórico de versão
+
+- Consulta o ficheiro [**CHANGELOG.md**](./CHANGELOG.md) para o que foi **adicionado** e **corrigido** por versão.
+
+## Características (resumo)
+
+- **Editor rico** (Tiptap) com formatação, listas, blocos de código, tarefas, etc.  
+- **Modo canvas** e **modo abas**  
+- **Plugins** (arquitectura extensível)  
+- **Exportação** em vários formatos; **atalhos** de teclado; **auto-save**  
+
+## Pré-requisitos
+
+- Node.js 18+  
+- npm ou yarn  
+
+## Instalação (código)
+
 ```bash
-git clone <url-do-repositorio>
-cd PureRef
-```
-
-2. Instale as dependências:
-```bash
+git clone <url-do-repositório>
+cd <pasta-do-clone>
 npm install
 ```
 
-## 🎮 Como Usar
+## Uso
 
-### Desenvolvimento
-
-Para rodar em modo de desenvolvimento:
+### Desenvolvimento (Vite + Electron)
 
 ```bash
 npm run electron:dev
 ```
 
-Isso iniciará o servidor Vite e o Electron simultaneamente.
+Inicia o servidor de desenvolvimento e a janela Electron.
 
-### Build
+### Build e instalador
 
-Para criar um executável:
+- **Windows (NSIS):** `npm run build:win`  
+- **macOS (DMG):** `npm run build:mac`  
+- **Linux (AppImage):** `npm run build:linux`  
 
-**Windows:**
-```bash
-npm run build:win
-```
+Os executáveis / instaladores são gerados em `dist/`. Para versionar ou partilhar o instalador Windows numa pasta dedicada, segue as instruções em [**installer/README.md**](./installer/README.md).
 
-**macOS:**
-```bash
-npm run build:mac
-```
+## Atalhos de teclado (exemplos)
 
-**Linux:**
-```bash
-npm run build:linux
-```
+- `Ctrl+N` — Nova nota  
+- `Ctrl+O` — Abrir ficheiro  
+- `Ctrl+S` / `Ctrl+Shift+S` — Guardar / Guardar como  
+- `Ctrl+F` — Procurar notas  
+- `Ctrl+Space` — Ajuda de atalhos  
+- `Escape` — Fechar modais  
+- `Ctrl+Tab` — Alternar canvas / abas  
 
-## ⌨️ Atalhos de Teclado
-
-- `Ctrl+N` - Nova nota
-- `Ctrl+O` - Abrir arquivo
-- `Ctrl+S` - Auto-salvar
-- `Ctrl+Shift+S` - Salvar como...
-- `Ctrl+F` - Buscar notas
-- `Ctrl+Space` - Mostrar ajuda de atalhos
-- `Escape` - Fechar modais
-- `Ctrl+Tab` - Alternar entre modo Canvas e Tabs
-
-## 📁 Estrutura do Projeto
+## Estrutura do projecto (resumo)
 
 ```
-PureRef/
-├── electron/          # Código do Electron (main process)
-├── src/               # Código React (renderer process)
-│   ├── components/    # Componentes React
-│   ├── hooks/         # Custom hooks
-│   ├── contexts/      # Contextos React
-│   ├── plugins/        # Sistema de plugins
-│   └── utils/         # Utilitários
-├── public/            # Arquivos estáticos
-├── build/             # Ícones e recursos de build
-└── dist/              # Build de produção
+.
+├── electron/          # Processo principal (Electron)
+├── src/               # Intervénio (React, hooks, plugins, utilitários)
+├── public/            # Recursos estáticos
+├── build/             # Ícones e recursos de empacotamento
+├── installer/         # Onde podes colocar o .exe (ver installer/README.md)
+├── dist/              # Saída de Vite e electron-builder (gerado; ignorado no git)
+└── package.json
 ```
 
-## 🔌 Sistema de Plugins
+## Plugins
 
-O projeto inclui um sistema de plugins extensível. Veja exemplos em `src/plugins/examples/`.
+Exemplos e interfaces em `src/plugins/` (incl. exemplos em `src/plugins/examples/`).
 
-## 📝 Licença
+## Licença
 
-MIT
-
-## 👨‍💻 Desenvolvimento
-
-Este projeto usa:
-- **Electron** - Framework para aplicações desktop
-- **React** - Biblioteca UI
-- **Vite** - Build tool e dev server
-- **Tailwind CSS** - Framework CSS
-- **Tiptap** - Editor de texto rico
-- **Lucide React** - Ícones
-
+**MIT** — vê a declaração de licença no repositório, se existir ficheiro `LICENSE`.
